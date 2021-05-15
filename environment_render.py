@@ -32,9 +32,9 @@ def callback(msg):
     env[police_x][police_y] = color["POLICE"]
     img = image_resize.resize(env,300,300)
     cv2.imshow("image", np.array(img))
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        pass
+    cv2.waitKey(1)
+    #if cv2.waitKey(1) & 0xFF == ord('q'):
+    #    pass
 
 def render():
     rospy.init_node('environment_render' ,anonymous=True)

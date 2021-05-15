@@ -51,8 +51,10 @@ class Environment:
     def __init__(self,max_step = 200, env_size = 10):
         self.size = env_size
         self.max_step = max_step
-        self.pub_police = rospy.Publisher('/environment/police/obs', Int8MultiArray, queue_size=10)
-        self.pub_robber = rospy.Publisher('/environment/robber/obs', Int8MultiArray, queue_size=10)
+        self.pub_police_state = rospy.Publisher('/environment/police/obs', Int8MultiArray, queue_size=10)
+        self.pub_robber_state = rospy.Publisher('/environment/robber/obs', Int8MultiArray, queue_size=10)
+        self.pub_police_nextstate = rospy.Publisher('/environment/police/next_obs', Int8MultiArray, queue_size=10)
+        self.pub_robber_nextstate = rospy.Publisher('/environment/robber/next_obs', Int8MultiArray, queue_size=10)
         self.pub_environment = rospy.Publisher('/environment', Int8MultiArray, queue_size=10)
         #RESET
         self.police = Blob(self.size)
@@ -89,15 +91,19 @@ class Environment:
         self.terminate_condition()
         deltax_pr = self.police.x - self.robber.x
         deltay_pr = self.police.y - self.robber.y
-        deltax_pb = self.robber.x - self.bank.x
-        deltay_pb = self.robber.y - self.bank.y
+        deltax_pb = self.police.x - self.bank.x
+        deltay_pb = self.police.y - self.bank.y
         reward = self.police_reward()
         return [reward, deltax_pr, deltay_pr, deltax_pb, deltay_pb]
 
     def cb_police_act(self, msg):
+        if self.terminate is True:
+            self.reset()
+        array = Int8MultiArray(data=self.police_observe())
+        self.pub_police_state.publish(array)
         self.police.action(msg.data)
         array = Int8MultiArray(data=self.police_observe())
-        self.pub_police.publish(array)
+        self.pub_police_nextstate.publish(array)
         data = [self.size,self.police.x,self.police.y,self.robber.x,self.robber.y,self.bank.x,self.bank.y,self.safehouse.x,self.safehouse.y,self.terminate]
         array = Int8MultiArray(data=data)
         self.pub_environment.publish(array)
@@ -122,9 +128,13 @@ class Environment:
         return [reward, deltax_rp, deltay_rp, deltax_rb, deltay_rb]
 
     def cb_robber_act(self, msg):
+        if self.terminate is True:
+            self.reset()
+        array = Int8MultiArray(data=self.robber_observe())
+        self.pub_robber_state.publish(array)
         self.robber.action(msg.data)
         array = Int8MultiArray(data=self.robber_observe())
-        self.pub_robber.publish(array)
+        self.pub_robber_nextstate.publish(array)
         data = [self.size,self.police.x,self.police.y,self.robber.x,self.robber.y,self.bank.x,self.bank.y,self.safehouse.x,self.safehouse.y,self.terminate]
         array = Int8MultiArray(data=data)
         self.pub_environment.publish(array)
@@ -132,22 +142,11 @@ class Environment:
 
 if __name__ == "__main__":
     rospy.init_node('environment')
-    env = Environment(max_step=200, env_size=20)
+    env = Environment(max_step=200, env_size=10)
     rospy.Subscriber('/environment/police/act', Int8, env.cb_police_act)
     rospy.Subscriber('/environment/robber/act', Int8, env.cb_robber_act)
     rospy.spin()
 
 
-    '''
-    env = Environment(max_step=200, env_size=20)
-    for _ in range(100):
-        env.police.action(np.random.randint(0,4))
-        env.robber.action(np.random.randint(0,4))
-        env.render()
-        if cv2.waitKey(500) & 0xFF == ord('q'):
-            break
-    '''
-    
-    
     
         
