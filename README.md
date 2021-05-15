@@ -7,7 +7,7 @@ ENVIRONMENTAL CONDITION
 - Police and robber have his own q-table
 - Each agent (police and robber) is processed using parallel computing, so we use ROS in here...
 
-Spec 
-- Ubuntu 20.04
-- ROS Focal Forsa
+MACHINE SPEC 
+- Ubuntu Focal Forsa
+- ROS Noetic
 - Python3
