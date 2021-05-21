@@ -61,12 +61,14 @@ if __name__ == '__main__':
         print("======== EPISODE : ",episode,"  ================")
         rospy.Subscriber('/environment/police/obs', Int8MultiArray, police.observation)
         print("state: ",police.state)
+
         if np.random.random() > police.EPSILON:
             print("epsilon: ",police.EPSILON, " EXPLOIT")
-            action=0
+            action=0 #QTABLE
         else:
             print("epsilon: ",police.EPSILON, " EXPLORE")
             action=np.random.randint(0,4)
+        
         police.action(choice=action)
         rospy.Subscriber('/environment/police/next_obs', Int8MultiArray, police.next_observation)
         rospy.Subscriber('/environment', Int8MultiArray, police.getTerminate)
